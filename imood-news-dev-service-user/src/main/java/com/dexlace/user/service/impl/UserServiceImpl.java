@@ -105,6 +105,7 @@ public class UserServiceImpl implements UserService {
         // 用户更新数据前，先把缓存数据删除，然后更新数据库，再同步到redis中去
         // 哪怕redis存入不成功，那么后续用户发起的请求还可以先查库存后存缓存，达到一致性
         // 双写一致，先删除redis，在更新，再设置redis
+        // 删第一次
         redis.del(REDIS_USER_INFO + ":" + userId);
 
 
@@ -121,6 +122,7 @@ public class UserServiceImpl implements UserService {
             GraceException.display(ResponseStatusEnum.USER_UPDATE_ERROR);
         }
 
+        // 更新数据库后一个正常的操作是写入redis
         // 再次查询用户最新信息，随后存入redis
         AppUser user = getUser(userId);
 //        redis.set(REDIS_USER_INFO + ":" + userId, JsonUtils.objectToJson(user), 7);
@@ -129,6 +131,7 @@ public class UserServiceImpl implements UserService {
         // 缓存双删策略
         try {
             Thread.sleep(200);
+            // 删第二次
             redis.del(REDIS_USER_INFO + ":" + userId);
             redis.set(REDIS_USER_INFO + ":" + userId, JsonUtils.objectToJson(user), 7);
         } catch (InterruptedException e) {

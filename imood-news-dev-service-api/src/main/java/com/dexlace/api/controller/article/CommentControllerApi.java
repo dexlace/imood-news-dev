@@ -46,7 +46,7 @@ public interface CommentControllerApi {
                              @RequestParam Integer pageSize);
 
     @PostMapping("/delete")
-    @ApiOperation(value = "用户评论数查询", notes = "用户评论数查询", httpMethod = "POST")
+    @ApiOperation(value = "用户评论删除", notes = "用户评论删除", httpMethod = "POST")
     GraceIMOODJSONResult delete(@RequestParam String writerId,
                                 @RequestParam String commentId);
 

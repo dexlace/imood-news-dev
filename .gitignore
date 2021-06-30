@@ -1,0 +1,9 @@
+# Project exclude paths
+/imood-news-dev-common/target/
+/imood-news-dev-model/target/
+/imood-news-dev-service-admin/target/
+/imood-news-dev-service-api/target/
+/imood-news-dev-service-article/target/
+/imood-news-dev-service-files/target/
+/imood-news-dev-service-user/target/
+/mybatis-generator-database/target/

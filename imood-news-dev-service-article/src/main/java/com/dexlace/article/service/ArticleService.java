@@ -24,6 +24,8 @@ public interface ArticleService {
      */
     void updateAppointToPublish();
 
+    void updateAppointToPublishRabbitmq(String articleId);
+
 
     /**
      * 用户查询自己的文章列表
@@ -38,11 +40,16 @@ public interface ArticleService {
      */
     void updateArticleStatus(String articleId, Integer pendingStatus);
 
+    /**
+     * 关联文章id和mongodbId，是一个更新操作
+     */
+    void updateArticleMongodb(String articleId, String mongoId);
 
-    void deleteArticle(String userId, String articleId);
+
+    String deleteArticle(String userId, String articleId);
 
 
-   void withdrawArticle(String userId, String articleId) ;
+    String withdrawArticle(String userId, String articleId);
 
     /**
      * 用户查询自己的文章列表

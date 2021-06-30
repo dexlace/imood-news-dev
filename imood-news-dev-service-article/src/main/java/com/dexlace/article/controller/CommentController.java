@@ -54,8 +54,8 @@ public class CommentController extends BaseController implements CommentControll
         idSet.add(userId);
 
         // 2. 发起restTemplate调用获得用户基本信息
-       String nickname = remoteCalBasicUserInfo(idSet).get(0).getNickname();
-       String face = remoteCalBasicUserInfo(idSet).get(0).getFace();
+       String nickname = remoteCallBasicUserInfo(idSet).get(0).getNickname();
+       String face = remoteCallBasicUserInfo(idSet).get(0).getFace();
 
         // 3. 保存评论信息
         commentPortalService.createComment(commentReplyBO.getArticleId(),

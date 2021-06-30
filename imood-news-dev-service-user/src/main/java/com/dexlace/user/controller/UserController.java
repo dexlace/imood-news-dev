@@ -38,6 +38,11 @@ public class UserController extends BaseController implements UserControllerApi 
     @Autowired
     private UserService userService;
 
+    /**
+     * 获取用户账户信息
+     * @param userId
+     * @return
+     */
     @Override
     public GraceIMOODJSONResult getAccountInfo(String userId) {
 
@@ -58,6 +63,11 @@ public class UserController extends BaseController implements UserControllerApi 
     }
 
 
+    /**
+     * 用户基本信息  包括粉丝数和关注数
+     * @param userId
+     * @return
+     */
     @Override
     public GraceIMOODJSONResult getUserInfo(String userId) {
         // 0. 判断不能为空

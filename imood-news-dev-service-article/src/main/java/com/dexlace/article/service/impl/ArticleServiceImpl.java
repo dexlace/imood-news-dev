@@ -1,9 +1,11 @@
 package com.dexlace.article.service.impl;
 
+import com.dexlace.api.config.RabbitMqDelayConfig;
 import com.dexlace.api.service.BaseService;
 import com.dexlace.article.mapper.ArticleMapper;
 import com.dexlace.article.mapper.ArticleMapperCustom;
 import com.dexlace.article.service.ArticleService;
+import com.dexlace.common.enums.ArticleAppointType;
 import com.dexlace.common.enums.ArticleReviewLevel;
 import com.dexlace.common.enums.ArticleReviewStatus;
 import com.dexlace.common.enums.YesOrNo;
@@ -14,13 +16,22 @@ import com.dexlace.common.utils.extend.AliTextReviewUtils;
 import com.dexlace.model.bo.NewArticleBO;
 import com.dexlace.model.entity.Article;
 import com.dexlace.model.entity.Category;
+import com.dexlace.model.eo.ArticleEO;
 import com.github.pagehelper.PageHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.n3r.idworker.Sid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageDeliveryMode;
+import org.springframework.amqp.core.MessagePostProcessor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.query.IndexQuery;
+import org.springframework.data.elasticsearch.core.query.IndexQueryBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
@@ -52,8 +63,14 @@ public class ArticleServiceImpl  extends BaseService implements ArticleService {
     private AliTextReviewUtils aliTextReviewUtils;
 
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private ElasticsearchTemplate esTemplate;
 
 
+    @Transactional
     @Override
     public void createArticle(NewArticleBO newArticleBO, Category category) {
 
@@ -73,9 +90,9 @@ public class ArticleServiceImpl  extends BaseService implements ArticleService {
         article.setUpdateTime(new Date());
 
         // 如果是预约发布时间，则需要条填充发布时间，否则按照用户提交时间
-        if (article.getIsAppoint() == YesOrNo.YES.type) {
+        if (article.getIsAppoint() == ArticleAppointType.TIMING.type) {
             article.setPublishTime(newArticleBO.getPublishTime());
-        } else if (article.getIsAppoint() == YesOrNo.NO.type) {
+        } else if (article.getIsAppoint() == ArticleAppointType.IMMEDIATELY.type) {
             article.setPublishTime(new Date());
         }
 
@@ -84,8 +101,37 @@ public class ArticleServiceImpl  extends BaseService implements ArticleService {
             GraceException.display(ResponseStatusEnum.ARTICLE_CREATE_ERROR);
         }
 
+
+        // 得到发布时间，需要计算往后延迟的时间
+        if (article.getIsAppoint() == ArticleAppointType.TIMING.type) {
+            // 得到毫秒数
+            final Long delay = newArticleBO.getPublishTime().getTime() - new Date().getTime();
+
+
+
+            MessagePostProcessor messagePostProcessor= message -> {
+                message.getMessageProperties()
+                        // 设置消息持久化
+                .setDeliveryMode(MessageDeliveryMode.PERSISTENT);
+                // 设置发布的时间延时
+                message.getMessageProperties().setDelay(delay.intValue());
+                return message;
+            };
+
+
+            rabbitTemplate.convertAndSend(
+                    RabbitMqDelayConfig.EXCHANGE_DELAY,
+                    "article.delay.publish",
+                    articleId,
+                    messagePostProcessor
+                    );
+
+
+        }
+
+
         /**
-         * FIXME: 只测试正常的，非正常词汇课后大家自己去测试
+         *
          */
         // 阿里智能AI进行文本自动检测
 //        String reviewResult = aliTextReviewUtils.reviewTextContent(newArticleBO.getTitle() + newArticleBO.getContent());
@@ -111,6 +157,7 @@ public class ArticleServiceImpl  extends BaseService implements ArticleService {
 
 
 
+    @Transactional
     @Override
     public void updateArticleStatus(String articleId, Integer pendingStatus) {
         Example articleExample = new Example(Article.class);
@@ -123,14 +170,61 @@ public class ArticleServiceImpl  extends BaseService implements ArticleService {
         if (result != 1) {
             GraceException.display(ResponseStatusEnum.ARTICLE_REVIEW_ERROR);
         }
+
+        // 如果审核通过，则查询article，存入es中
+        if (pendingStatus == ArticleReviewStatus.SUCCESS.type) {
+            Article article= articleMapper.selectByPrimaryKey(articleId);
+            // 如果是即时发布的文章，审核通过后则可以直接存入es中
+            if(article.getIsAppoint() == ArticleAppointType.IMMEDIATELY.type) {
+                ArticleEO articleEO = new ArticleEO();
+                articleEO.setId(articleId);
+                articleEO.setTitle(article.getTitle());
+                articleEO.setCategoryId(article.getCategoryId());
+                articleEO.setArticleType(article.getArticleType());
+                articleEO.setArticleCover(article.getArticleCover());
+                articleEO.setPublishTime(article.getPublishTime());
+                articleEO.setPublishUserId(article.getPublishUserId());
+                IndexQuery iq = new IndexQueryBuilder().withObject(articleEO).build();
+                esTemplate.index(iq);
+            }
+            // FIXME 如果是定时发布的文章，此处不能放入es，需要在定时的延迟队列中执行,
+            // 需要在审核通过的情况下  在定时发布的时间放入es  略
+
+        }
+
+
+    }
+
+    @Transactional
+    @Override
+    public void updateArticleMongodb(String articleId, String mongoId) {
+
+        Article pendingArticle = new Article();
+        pendingArticle.setId(articleId);
+        pendingArticle.setMongoFileId( mongoId);
+        articleMapper.updateByPrimaryKeySelective(pendingArticle);
+
     }
 
 
-
+    @Transactional
     @Override
     public void updateAppointToPublish() {
         articleMapperCustom.updateAppointToPublish();
     }
+
+
+
+    @Transactional
+    @Override
+    public void updateAppointToPublishRabbitmq(String articleId) {
+
+        Article article=new Article();
+        article.setId(articleId);
+        article.setIsAppoint(ArticleAppointType.IMMEDIATELY.type);
+        articleMapper.updateByPrimaryKeySelective(article);
+    }
+
 
     @Override
     public PagedGridResult queryMyArticleList(String userId, String keyword,
@@ -208,7 +302,7 @@ public class ArticleServiceImpl  extends BaseService implements ArticleService {
 
     @Transactional
     @Override
-    public void deleteArticle(String userId, String articleId) {
+    public String deleteArticle(String userId, String articleId) {
 
         Example articleExample = new Example(Article.class);
         Example.Criteria criteria = articleExample.createCriteria();
@@ -221,7 +315,9 @@ public class ArticleServiceImpl  extends BaseService implements ArticleService {
         int result = articleMapper.updateByExampleSelective(pending, articleExample);
         if (result != 1) {
             GraceException.display(ResponseStatusEnum.ARTICLE_DELETE_ERROR);
+            return null;
         }
+        return articleMapper.selectOneByExample(articleExample).getMongoFileId();
 
     }
 
@@ -229,7 +325,7 @@ public class ArticleServiceImpl  extends BaseService implements ArticleService {
 
     @Transactional
     @Override
-    public void withdrawArticle(String userId, String articleId) {
+    public String withdrawArticle(String userId, String articleId) {
 
         Example articleExample = new Example(Article.class);
         Example.Criteria criteria = articleExample.createCriteria();
@@ -242,7 +338,10 @@ public class ArticleServiceImpl  extends BaseService implements ArticleService {
         int result = articleMapper.updateByExampleSelective(pending, articleExample);
         if (result != 1) {
             GraceException.display(ResponseStatusEnum.ARTICLE_DELETE_ERROR);
+            return null;
         }
+
+        return articleMapper.selectOneByExample(articleExample).getMongoFileId();
 
     }
 }

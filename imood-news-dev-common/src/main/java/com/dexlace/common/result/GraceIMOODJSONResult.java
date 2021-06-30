@@ -96,6 +96,7 @@ public class GraceIMOODJSONResult {
     /**
      *
      *  以下对应三种不同结构的JSONResult
+     *  满足多种需求
      */
     public GraceIMOODJSONResult(ResponseStatusEnum responseStatus) {
         this.status = responseStatus.status();
@@ -116,6 +117,11 @@ public class GraceIMOODJSONResult {
 
     public GraceIMOODJSONResult() {
     }
+
+
+    /**
+     * 一系列的get和set方法
+     */
 
     public Integer getStatus() {
         return status;

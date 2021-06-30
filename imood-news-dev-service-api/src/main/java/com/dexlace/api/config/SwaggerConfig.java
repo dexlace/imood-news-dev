@@ -31,8 +31,8 @@ public class SwaggerConfig {
     public Docket createRestApi() {
 
         Predicate<RequestHandler> adminPredicate = RequestHandlerSelectors.basePackage("com.dexlace.admin.controller");
-//        Predicate<RequestHandler> articlePredicate = RequestHandlerSelectors.basePackage("com.imooc.article.controller");
-        // 注意这里的不是接口controller的路径所在的包  而是实现类的包  表示对该路径下的apd进行监控
+        Predicate<RequestHandler> articlePredicate = RequestHandlerSelectors.basePackage("com.dexlace.article.controller");
+        // 注意这里的不是接口controller的路径所在的包  而是实现类的包  表示对该路径下的api进行监控
         // 注意子模块的启动类不能少了@ComponentScan注解
         Predicate<RequestHandler> userPredicate = RequestHandlerSelectors.basePackage("com.dexlace.user.controller");
         Predicate<RequestHandler> filesPredicate = RequestHandlerSelectors.basePackage("com.dexlace.files.controller");
@@ -40,7 +40,7 @@ public class SwaggerConfig {
         return new Docket(DocumentationType.SWAGGER_2)  // 指定api类型为swagger2
                 .apiInfo(apiInfo())                 // 用于定义api文档汇总信息
                 .select()
-                .apis(Predicates.or(adminPredicate, userPredicate, filesPredicate))
+                .apis(Predicates.or(adminPredicate,articlePredicate, userPredicate, filesPredicate))
 //                .apis(Predicates.or( userPredicate))
                 .paths(PathSelectors.any())         // 所有controller
                 .build();

@@ -58,7 +58,8 @@ public class MyFansController extends BaseController implements MyFansController
             pageSize = COMMON_PAGE_SIZE;
         }
 
-        PagedGridResult gridResult = myFansService.queryMyFansList(writerId, page, pageSize);
+//        PagedGridResult gridResult = myFansService.queryMyFansList(writerId, page, pageSize);
+        PagedGridResult gridResult = myFansService.queryMyFansESList(writerId, page, pageSize);
         return GraceIMOODJSONResult.ok(gridResult);
     }
 

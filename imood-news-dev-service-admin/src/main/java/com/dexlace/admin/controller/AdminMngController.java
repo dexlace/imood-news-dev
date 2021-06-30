@@ -45,7 +45,13 @@ public class AdminMngController extends BaseController implements AdminMngContro
     @Autowired
     private FaceVerifyUtils faceVerifyUtils;
 
-
+    /**
+     * 登录
+     * @param adminLoginBO 前端传来的登录bo对象
+     * @param request
+     * @param response
+     * @return
+     */
     @Override
     public GraceIMOODJSONResult adminLogin(AdminLoginBO adminLoginBO,
                                            HttpServletRequest request,
@@ -57,7 +63,7 @@ public class AdminMngController extends BaseController implements AdminMngContro
             return GraceIMOODJSONResult.errorCustom(ResponseStatusEnum.ADMIN_NOT_EXIT_ERROR);
         }
 
-        // 判断
+        // bo穿的密码和数据库的密码对比
         boolean isPwdMatch = BCrypt.checkpw(adminLoginBO.getPassword(), admin.getPassword());
         if (isPwdMatch) {
             doLoginSettings(admin, request, response);
@@ -68,6 +74,12 @@ public class AdminMngController extends BaseController implements AdminMngContro
         }
     }
 
+    /**
+     * 设置管理员的缓存
+     * @param admin
+     * @param request
+     * @param response
+     */
     private void doLoginSettings(AdminUser admin,
                                  HttpServletRequest request,
                                  HttpServletResponse response) {
@@ -81,12 +93,7 @@ public class AdminMngController extends BaseController implements AdminMngContro
     }
 
 
-    @Override
-    public GraceIMOODJSONResult adminIsExist(String username) {
-        // 验证管理人用户名必须唯一
-        checkAdminExist(username);
-        return GraceIMOODJSONResult.ok();
-    }
+
 
     @Override
     public GraceIMOODJSONResult addNewAdmin(HttpServletRequest request, HttpServletResponse response, NewAdminBO newAdminBO) {
@@ -118,6 +125,18 @@ public class AdminMngController extends BaseController implements AdminMngContro
         return GraceIMOODJSONResult.ok();
 
 
+    }
+
+    /**
+     * 管理员是否存在 注意是个controller
+     * @param username
+     * @return
+     */
+    @Override
+    public GraceIMOODJSONResult adminIsExist(String username) {
+        // 验证管理人用户名必须唯一
+        checkAdminExist(username);
+        return GraceIMOODJSONResult.ok();
     }
 
 

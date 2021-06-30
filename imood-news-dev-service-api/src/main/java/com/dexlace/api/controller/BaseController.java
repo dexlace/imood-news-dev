@@ -7,6 +7,7 @@ import com.dexlace.common.utils.RedisOperator;
 import com.dexlace.model.entity.AdminUser;
 import com.dexlace.model.vo.AppUserVO;
 import com.github.pagehelper.PageInfo;
+import com.netflix.discovery.DiscoveryClient;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,7 +50,11 @@ public class BaseController {
 
 
     @Autowired
-    private RestTemplate restTemplate;
+    public RestTemplate restTemplate;
+
+
+
+
     /**
      * 验证beanBO中的字段错误信息
      * @param result
@@ -119,7 +124,7 @@ public class BaseController {
 
 
 
-    public List<AppUserVO> remoteCalBasicUserInfo(Set publishUserIdSet) {
+    public List<AppUserVO> remoteCallBasicUserInfo(Set publishUserIdSet) {
         //发起restTemplate请求查询用户列表
         String userServerUrlExecute
                 = "http://user.imoocnews.com:8003/user/queryByIds?userIds=" + JsonUtils.objectToJson(publishUserIdSet);

@@ -1,0 +1,67 @@
+server:
+  port: 8010
+  tomcat:
+    uri-encoding: UTF-8
+    max-swallow-size: -1  # tomcat默认大小2M，超过2M的文件不会被捕获，需要调整此处大小为100MB或者-1即可
+
+############################################################
+#
+# 配置项目信息
+#
+############################################################
+spring:
+  application:
+    name: service-article-html
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+  elasticsearch:
+    rest:
+      uris:
+        - 192.168.205.114:9200
+  data:
+    mongodb:
+      uri: mongodb://root:root@192.168.205.118:27117
+      database: imood-news
+  redis:
+    database: 1
+    host: 192.168.205.114
+    port: 6379
+    password: 123456
+
+  rabbitmq:
+    host: 192.168.205.107
+    port: 5672
+    username: judy
+    password: 123456
+    virtual-host: imood-news
+
+
+  freemarker:
+    charset: UTF-8
+    content-type: text/html
+    suffix: .ftl
+    template-loader-path: classpath:/templates/
+
+freemarker:  # 这个只是自定义的配置而已，在工程中被引用
+  html:
+    target: E:\\imood_news_htmls
+    article: D:\\softwareOfDevelopment\\apache-tomcat-9.0.37\\webapps\\imooc-news\\portal\\static
+
+
+
+
+# 设置域名，在java代码中获取，这里是资源配置
+website:
+  domain-name: imoocnews.com
+
+eureka:
+  client:
+    # 是否要把当前server注册
+    register-with-eureka: true
+    # 从注册中心查询检索服务实例，server的话没必要，直接false
+    fetch-registry: true
+    service-url:
+      # 单实例配置自己的服务地址，高可用则配置其他服务的地址
+      defaultZone: http://register-7070:7070/eureka/,http://register-7071:7071/eureka/,http://register-7072:7072/eureka/

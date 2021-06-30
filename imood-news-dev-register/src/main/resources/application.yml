@@ -1,0 +1,73 @@
+#server:
+#  port: 7070
+#  tomcat:
+#    uri-encoding: UTF-8
+#    max-swallow-size: -1  # tomcat默认大小2M，超过2M的文件不会被捕获，需要调整此处大小为100MB或者-1即可
+
+############################################################
+#
+# 配置项目信息
+#
+############################################################
+#spring:
+#  application:
+#    name: service-register
+#
+#eureka:
+#  instance:
+#    #    hostname: localhost   # eureka-server实例
+#    hostname: eureka7070    # 也可以通过switchHost配置
+#  client:
+#    # 是否要把当前server注册（都行）
+#    register-with-eureka: false
+#    # 从注册中心查询检索服务实例，server的话没必要，直接false
+#    fetch-registry: false
+#    service-url:
+#      # 单实例配置自己的服务地址，高可用则配置其他服务的地址
+#      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+
+
+
+############################################################
+#
+# eureka 集群的注册中心
+# web访问端口号  约定：7001~7003
+#
+############################################################
+server:
+  port: ${port:7070}
+  tomcat:
+    uri-encoding: UTF-8
+
+
+spring:
+  application:
+    name: register
+  elasticsearch:
+    rest:
+     uris:
+       - 192.168.205.114:9200
+############################################################
+#
+# eureka 配置信息
+#
+############################################################
+eureka:
+  instance:
+    # 集群中每个eureka的名字都是唯一的
+    hostname: register-${server.port}
+  port2: ${port2:7071}
+  port3: ${port3:7072}
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    # 单实例配置自己的服务地址，高可用集群则配置多个地址
+    service-url:
+      defaultZone: http://register-${eureka.port2}:${eureka.port2}/eureka/,http://register-${eureka.port3}:${eureka.port3}/eureka/
+  server:
+    enable-self-preservation: false   # 关闭eureka的自我保护功能
+    eviction-interval-timer-in-ms: 5000   # 清理无效节点的时间，可以缩短为5s，默认60s
+
+
+
+

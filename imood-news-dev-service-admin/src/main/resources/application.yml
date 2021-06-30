@@ -41,6 +41,10 @@ spring:
     database: 1
     host: 192.168.205.114
     password: 123456
+  elasticsearch:
+    rest:
+      uris:
+        - 192.168.205.114:9200
 
   data:
     mongodb:
@@ -78,3 +82,12 @@ pagehelper:
 website:
   domain-name: imoocnews.com
 
+eureka:
+  client:
+    # 是否要把当前server注册
+    register-with-eureka: true
+    # 从注册中心查询检索服务实例，server的话没必要，直接false
+    fetch-registry: true
+    service-url:
+      # 单实例配置自己的服务地址，高可用则配置其他服务的地址
+      defaultZone: http://register-7070:7070/eureka/,http://register-7071:7071/eureka/,http://register-7072:7072/eureka/

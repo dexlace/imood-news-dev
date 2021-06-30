@@ -53,6 +53,13 @@ public class FileUploaderController implements FileUploaderControllerApi {
 
     public static final String TEMP_PATH="D:\\imood-face\\tempFace";
 
+    /**
+     * 这是普通用户头像上传
+     * @param userId
+     * @param file
+     * @return
+     * @throws Exception
+     */
     public GraceIMOODJSONResult uploadFace(String userId, MultipartFile file) throws Exception {
 
         String path = "";
@@ -90,6 +97,14 @@ public class FileUploaderController implements FileUploaderControllerApi {
         return GraceIMOODJSONResult.ok(finalUserFaceUrl);
     }
 
+
+    /**
+     * 这是文章服务的多图片上传
+     * @param userId
+     * @param files
+     * @return
+     * @throws Exception
+     */
     @Override
     public GraceIMOODJSONResult uploadSomeFiles(String userId, MultipartFile[] files) throws Exception {
         // 声明list，用于存放多个图片的地址路径，返回到前端
@@ -140,6 +155,12 @@ public class FileUploaderController implements FileUploaderControllerApi {
         return GraceIMOODJSONResult.ok(imageUrlList);
     }
 
+    /**
+     * 这是人脸入库操作
+     * @param newAdminBO
+     * @return
+     * @throws Exception
+     */
     @Override
     public GraceIMOODJSONResult uploadToGirdFS(NewAdminBO newAdminBO) throws Exception {
             // base64字符串
@@ -164,6 +185,13 @@ public class FileUploaderController implements FileUploaderControllerApi {
 
     }
 
+    /**
+     * 这是查看人脸信息
+     * @param faceId
+     * @param request
+     * @param response
+     * @throws Exception
+     */
     @Override
     public void readInGridFS(String faceId,
                              HttpServletRequest request,
@@ -223,6 +251,14 @@ public class FileUploaderController implements FileUploaderControllerApi {
         return file;
     }
 
+    /**
+     * 这是查看mongobd中的face
+     * @param faceId
+     * @param request
+     * @param response
+     * @return
+     * @throws Exception
+     */
     @Override
     public GraceIMOODJSONResult readFace64InGridFS(String faceId,
                                               HttpServletRequest request,

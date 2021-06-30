@@ -1,0 +1,45 @@
+server:
+  port: 9000
+  tomcat:
+    uri-encoding: UTF-8
+spring:
+  application:
+    name: gateway
+  redis:
+    database: 1
+    host: 192.168.205.114
+    port: 6379
+    password: 123456
+
+eureka:
+  client:
+    # 是否要把当前server注册
+    register-with-eureka: true
+    # 从注册中心查询检索服务实例，server的话没必要，直接false
+    fetch-registry: true
+    service-url:
+      # 单实例配置自己的服务地址，高可用则配置其他服务的地址
+      defaultZone: http://register-7070:7070/eureka/,http://register-7071:7071/eureka/,http://register-7072:7072/eureka/
+
+#### http://网关地址：端口号/实例id/path
+zuul:
+  routes:
+    service-article:           # 配置微服务的路由id，微服务的实例id
+      path: /service-article/**   # 请求路径
+      service-id: service-article   # 请求转发的微服务实例id
+#      url: http://192.168.31.129:8001    # 请求转发到的微服务地址所在的ip
+
+
+# ip请求限制的参数配置
+blackIp:
+  continueCounts: ${counts:10}  #ip连续请求的次数
+  timeInterval: ${interval:10}  # ip判断的时间间隔，单位：秒
+  limitTimes: ${times:15}   # 限制的时间，单位：秒
+
+
+
+
+
+
+
+

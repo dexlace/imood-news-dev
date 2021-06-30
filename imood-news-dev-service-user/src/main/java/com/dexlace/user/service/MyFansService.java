@@ -33,6 +33,11 @@ public interface MyFansService {
     public PagedGridResult queryMyFansList(String writerId, Integer page, Integer pageSize);
 
 
+
+    public PagedGridResult queryMyFansESList(String writerId,
+                                             Integer page,
+                                             Integer pageSize);
+
     /**
      * 查询男粉丝或者女粉丝数量
      */

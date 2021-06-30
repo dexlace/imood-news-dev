@@ -34,6 +34,12 @@ public class PassportController extends BaseController implements PassportContro
     private UserService userService;
     public static final String REDIS_USER_TOKEN = "redis_user_token";
 
+    /**
+     * 获取验证码
+     * @param mobile
+     * @param request
+     * @return
+     */
     @Override
     public GraceIMOODJSONResult getSMSCode(String mobile, HttpServletRequest request) {
         // 根据用户的ip来限制用户在60秒内只能获得一次验证吗。
@@ -50,14 +56,21 @@ public class PassportController extends BaseController implements PassportContro
 //            mobile = "15914463559";
 //        }
         String random = (int) ((Math.random() * 9 + 1) * 100000) + "";
-        // 把验证码放入redis，并且锁住用户的ip为60秒，60秒内无法再次发送验证码
+        // 把验证码放入redis，并且有效时间为30分钟
         redis.set(MOBILE_SMSCODE + mobile, random, 30 * 60);
         // 没有钱买短信服务的注释下面的代码  然后去redis中看信息
 //        smsUtils.sendSMS(mobile, random);
         return GraceIMOODJSONResult.ok();
     }
 
-
+    /**
+     * 登录
+     * @param request
+     * @param response
+     * @param registerLoginBO
+     * @param result
+     * @return
+     */
     public GraceIMOODJSONResult doLogin(HttpServletRequest request,
                                         HttpServletResponse response,
                                         RegisterLoginBO registerLoginBO,

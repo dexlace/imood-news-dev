@@ -28,11 +28,14 @@ public class IMOODJSONResult {
     // 响应消息
     private String msg;
 
-    // 响应中的数据
+    // 响应中的数据  Object类型可以适配所有数据类型
     private Object data;
 
     private String ok;	// 不使用
 
+    /**
+     * 几个静态方法，对应几个构造函数，这里是为了避免去new 对象
+     */
     public static IMOODJSONResult build(Integer status, String msg, Object data) {
         return new IMOODJSONResult(status, msg, data);
     }
@@ -77,12 +80,27 @@ public class IMOODJSONResult {
 
     }
 
+
+    /**
+     * 一系列的构造函数
+     * @param status
+     * @param msg
+     * @param data
+     */
     public IMOODJSONResult(Integer status, String msg, Object data) {
         this.status = status;
         this.msg = msg;
         this.data = data;
     }
 
+
+    /**
+     *
+     * @param status 状态码
+     * @param msg 响应消息
+     * @param data 额外的数据内容
+     * @param ok
+     */
     public IMOODJSONResult(Integer status, String msg, Object data, String ok) {
         this.status = status;
         this.msg = msg;
@@ -90,6 +108,11 @@ public class IMOODJSONResult {
         this.ok = ok;
     }
 
+
+    /**
+     * 传一个参数的构造函数默认返回结果为200，表示成功
+     * @param data 返回的内容  data用Object类型表示可以适配任何类型
+     */
     public IMOODJSONResult(Object data) {
         this.status = 200;
         this.msg = "OK";
@@ -99,6 +122,12 @@ public class IMOODJSONResult {
     public Boolean isOK() {
         return this.status == 200;
     }
+
+
+    /**
+     * 以下是get和set方法
+     *
+     */
 
     public Integer getStatus() {
         return status;

@@ -6,13 +6,21 @@ import com.dexlace.common.utils.PagedGridResult;
 import com.dexlace.common.utils.RedisOperator;
 import com.dexlace.model.entity.AppUser;
 import com.dexlace.model.entity.Fans;
+import com.dexlace.model.eo.FansEO;
 import com.dexlace.model.vo.RegionRatioVO;
 import com.dexlace.user.mapper.FansMapper;
 import com.dexlace.user.service.MyFansService;
 import com.dexlace.user.service.UserService;
 import com.github.pagehelper.PageHelper;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.n3r.idworker.Sid;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.aggregation.AggregatedPage;
+import org.springframework.data.elasticsearch.core.query.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +45,10 @@ public class MyFansServiceImpl extends BaseService implements MyFansService {
 
     @Autowired
     private RedisOperator redis;
+
+    @Autowired
+    private ElasticsearchTemplate esTemplate;
+
 
 
     @Override
@@ -78,7 +90,11 @@ public class MyFansServiceImpl extends BaseService implements MyFansService {
         // redis 我的关注数累加
         redis.increment(REDIS_MY_FOLLOW_COUNTS + ":" + fanId, 1);
 
-
+       // 保存粉丝关系到es中
+        FansEO fansEO = new FansEO();
+        BeanUtils.copyProperties(fan, fansEO);
+        IndexQuery iq = new IndexQueryBuilder().withObject(fansEO).build();
+        esTemplate.index(iq);
     }
 
 
@@ -95,6 +111,13 @@ public class MyFansServiceImpl extends BaseService implements MyFansService {
         redis.decrement(REDIS_WRITER_FANS_COUNTS + ":" + writerId, 1);
         // redis 我的关注数累减
         redis.decrement(REDIS_MY_FOLLOW_COUNTS + ":" + fanId, 1);
+
+        // 删除es中的粉丝关系，DeleteQuery：根据条件删除
+        DeleteQuery dq = new DeleteQuery();
+        dq.setQuery(QueryBuilders.termQuery("writerId", writerId));
+        dq.setQuery(QueryBuilders.termQuery("fanId", fanId));
+        esTemplate.delete(dq, FansEO.class);
+
     }
 
 
@@ -111,6 +134,29 @@ public class MyFansServiceImpl extends BaseService implements MyFansService {
         List<Fans> list = fansMapper.select(fan);
         return setterPagedGrid(list, page);
     }
+
+    @Override
+    public PagedGridResult queryMyFansESList(String writerId,
+                                             Integer page,
+                                             Integer pageSize) {
+        page--;
+        Pageable pageable = PageRequest.of(page, pageSize);
+
+        SearchQuery query = new NativeSearchQueryBuilder()
+                .withQuery(QueryBuilders.termQuery("writerId", writerId))
+                .withPageable(pageable)
+                .build();
+        AggregatedPage<FansEO> pagedFans = esTemplate.queryForPage(query, FansEO.class);
+
+        PagedGridResult gridResult = new PagedGridResult();
+        gridResult.setRows(pagedFans.getContent());
+        gridResult.setPage(page + 1);
+        gridResult.setTotal(pagedFans.getTotalPages());
+        gridResult.setRecords(pagedFans.getTotalElements());
+
+        return gridResult;
+    }
+
 
 
     @Override
